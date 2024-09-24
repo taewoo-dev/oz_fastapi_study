@@ -11,6 +11,8 @@ fastapi = {extras = ["standard"], version = "^0.115.0"}
 uvicorn = "^0.30.6"
 black = "^24.8.0"
 python-multipart = "^0.0.10"
+bcrypt = "^4.2.0"
+pyjwt = "^2.9.0"
 
 
 [build-system]

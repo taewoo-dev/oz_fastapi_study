@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Response
+from fastapi import FastAPI, UploadFile
 from users.router import router as u_router
 
 app = FastAPI()

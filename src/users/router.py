@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPBasicCredentials, HTTPBasic
 
 from .request import CreateUserRequest, UpdateUserRequest
 
@@ -11,6 +12,17 @@ users = []
 @router.get("/")
 def get_users_handler():
     return users
+
+
+basic_auth = HTTPBasic()
+
+
+@router.get("/me")
+def get_me_handler(
+    credentials: HTTPBasicCredentials = Depends(basic_auth),
+):
+    print(credentials.username, credentials.password)
+    return
 
 
 @router.post("/")
