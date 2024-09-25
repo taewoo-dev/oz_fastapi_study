@@ -1,12 +1,9 @@
 from fastapi import APIRouter, Query, UploadFile, status, HTTPException
 
 from products.dto import (
-    CreateProductRequest,
-    UpdateProductRequest,
     ProductResponse,
-    ProductsListResponse,
-    CreateProductResponse,
-    UpdateProductResponse,
+    ProductCreateRequest,
+    ProductUpdateRequest,
 )
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -21,7 +18,7 @@ products = [
 
 @router.get(
     "",
-    response_model=ProductResponse,
+    response_model=list[ProductResponse],
     description="제품 전체 조회 API입니다",
     status_code=status.HTTP_200_OK,
 )
@@ -32,7 +29,7 @@ def get_products_handler(
     return_list = []
 
     if max_price is None and name is None:
-        return ProductsListResponse(products=products)
+        return [ProductResponse.build(product=product) for product in products]
 
     if max_price and name:
         for product in products:
@@ -44,24 +41,24 @@ def get_products_handler(
             if product["price"] <= max_price:
                 return_list.append(product)
 
-    return ProductsListResponse(products=return_list)
+    return [ProductResponse(product=product) for product in return_list]
 
 
 @router.post(
     "",
-    response_model=CreateProductResponse,
+    response_model=ProductResponse,
     description="단일 제품 생성 API입니다",
     status_code=status.HTTP_201_CREATED,
 )
-def create_product_handler(body: CreateProductRequest):
-    products.append(
-        {
-            "id": body.id,
-            "name": body.name,
-            "price": body.price,
-        }
-    )
-    return CreateProductRequest(message="제품이 성공적으로 생성되었습니다")
+def create_product_handler(body: ProductCreateRequest):
+    product = {
+        "id": body.id,
+        "name": body.name,
+        "price": body.price,
+        "image_name": None,
+    }
+    products.append(product)
+    return ProductResponse.build(product=product)
 
 
 @router.get(
@@ -73,7 +70,7 @@ def create_product_handler(body: CreateProductRequest):
 def get_product_handler(product_id: int):
     for product in products:
         if product["id"] == product_id:
-            return ProductResponse(product)
+            return ProductResponse.build(product=product)
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Product not found",
@@ -82,37 +79,18 @@ def get_product_handler(product_id: int):
 
 @router.patch(
     "/{product_id}",
-    response_model=UpdateProductResponse,
+    response_model=ProductResponse,
     description="단일 제품 업데이트 API입니다",
     status_code=status.HTTP_200_OK,
 )
-def update_product_handler(product_id: int, body: UpdateProductRequest):
+def update_product_handler(product_id: int, body: ProductUpdateRequest):
     for product in products:
         if product["id"] == product_id:
             if body.name:
                 product["name"] = body.name
             if body.price:
                 product["price"] = body.price
-            return UpdateProductResponse(
-                message="제품이 성공적으로 업데이트 되었습니다"
-            )
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Product not found",
-    )
-
-
-@router.patch(
-    "/file/{product_id}",
-    response_model=UpdateProductResponse,
-    description="file upload API입니다",
-    status_code=status.HTTP_200_OK,
-)
-def update_product_file_handler(product_id: int, file: UploadFile):
-    for product in products:
-        if product["id"] == product_id:
-            product["image_name"] = file.filename
-            return UpdateProductResponse(message="file이 성공적으로 업로드 되었습니다")
+            return ProductResponse.build(product=product)
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Product not found",
@@ -128,6 +106,23 @@ def delete_product_handler(product_id: int):
     for product in products:
         if product["id"] == product_id:
             products.remove(product)
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Product not found",
+    )
+
+
+@router.patch(
+    "/file/{product_id}",
+    response_model=ProductResponse,
+    description="file upload API입니다",
+    status_code=status.HTTP_200_OK,
+)
+def update_product_file_handler(product_id: int, file: UploadFile):
+    for product in products:
+        if product["id"] == product_id:
+            product["image_name"] = file.filename
+            return ProductResponse.build(product=product)
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Product not found",

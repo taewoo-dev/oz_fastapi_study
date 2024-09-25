@@ -1,29 +1,37 @@
+from typing import TypedDict
+
 from pydantic import BaseModel
 
 
-class CreateProductRequest(BaseModel):
+class ProductCreateRequest(BaseModel):
     id: int
     name: str
     price: int
 
 
-class UpdateProductRequest(BaseModel):
-    name: str | None = None
-    price: int | None = None
-
-
-class ProductResponse(BaseModel):
+class ProductUpdateRequest(BaseModel):
     name: str
     price: int
 
 
-class ProductsListResponse(BaseModel):
-    products: list[ProductResponse]
+class ProductTypedDict(TypedDict):
+    id: int
+    name: str
+    price: int
+    image_name: str | None
 
 
-class CreateProductResponse(BaseModel):
-    message: str
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    price: int
+    image_name: str | None
 
-
-class UpdateProductResponse(BaseModel):
-    message: str
+    @classmethod
+    def build(cls, product: ProductTypedDict):
+        return cls(
+            id=product["id"],
+            name=product["name"],
+            price=product["price"],
+            image_name=product["image_name"],
+        )
