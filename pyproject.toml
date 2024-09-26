@@ -16,6 +16,8 @@ pyjwt = "^2.9.0"
 sqlalchemy = "^2.0.35"
 pymysql = "^1.1.1"
 cryptography = "^43.0.1"
+aiomysql = "^0.2.0"
+greenlet = "^3.1.1"
 
 
 [build-system]
