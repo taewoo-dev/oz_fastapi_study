@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Path, status, HTTPException, Depends, BackgroundTasks
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Path, status, Depends, BackgroundTasks
+
 
 from core.authenticate.dto import JwtTokenResponseDto
 from core.email import send_email
@@ -13,7 +11,7 @@ from users.dto import (
 )
 from users.models import User
 from core.authenticate.services import AuthenticateService
-from users.repository import UserAsyncRepository
+from users.services import UserAsyncService
 
 router = APIRouter(prefix="/async/users", tags=["Async Users"])
 
@@ -27,10 +25,10 @@ router = APIRouter(prefix="/async/users", tags=["Async Users"])
     status_code=status.HTTP_200_OK,
 )
 async def get_users_handler(
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    users: User | None = await user_repo.get_users()
-    print(users)
+    users: User | None = await user_service.get_all_users()
+
     return [UserResponseDto.build(user=user) for user in users]
 
 
@@ -43,15 +41,10 @@ async def get_users_handler(
 async def get_user_handler(
     user_id: int = Path(default=..., ge=1),
     _: str = Depends(AuthenticateService.get_username),
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    user: User | None = await user_repo.get_user_by_id(user_id=user_id)
+    user: User | None = await user_service.get_user_or_404_by_user_id(user_id=user_id)
 
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
     return UserResponseDto.build(user=user)
 
 
@@ -64,17 +57,13 @@ async def get_user_handler(
 )
 async def get_me_handler(
     username: str = Depends(AuthenticateService.get_username),
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    user: User | None = await user_repo.get_user_by_username(username=username)
-
-    if user:
-        return UserResponseDto.build(user=user)
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User Not Found",
+    user: User | None = await user_service.get_user_or_404_by_username(
+        username=username
     )
+
+    return UserResponseDto.build(user=user)
 
 
 @router.patch(
@@ -85,24 +74,14 @@ async def get_me_handler(
 )
 async def update_me_handler(
     body: UserUpdateRequestDto,
-    auth_service: AuthenticateService = Depends(),
     username: str = Depends(AuthenticateService.get_username),
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    user: User | None = await user_repo.get_user_by_username(username=username)
-
-    if user:
-        new_password = auth_service.hash_password(plain_password=body.password)
-        user.update_password(new_password=new_password)
-
-        await user_repo.save(user=user)
-
-        return UserResponseDto.build(user=user)
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User Not Found",
+    user: User | None = await user_service.update_user_password_or_404(
+        username=username, password=body.password
     )
+
+    return UserResponseDto.build(user=user)
 
 
 @router.delete(
@@ -112,21 +91,11 @@ async def update_me_handler(
 )
 async def delete_me_handler(
     username: str = Depends(AuthenticateService.get_username),
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    user: User | None = await user_repo.get_user_by_username(username=username)
-
-    if user:
-        await user_repo.delete(user=user)
-        return None
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User Not Found",
-    )
+    user: User | None = await user_service.delete_user_or_404(username=username)
 
 
-# JWT Authenticate
 @router.post(
     "/sign-up",
     response_model=UserResponseDto,
@@ -135,15 +104,11 @@ async def delete_me_handler(
 async def user_sign_up_handler(
     body: UserCreateRequestDto,
     background_task: BackgroundTasks,
-    auth_service: AuthenticateService = Depends(),
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    new_user = User.create(
-        username=body.username,
-        password=auth_service.hash_password(plain_password=body.password),
+    new_user = await user_service.create_user(
+        username=body.username, password=body.password
     )
-
-    await user_repo.save(user=new_user)
 
     background_task.add_task(send_email, "회원가입을 축하합니다!")
 
@@ -157,28 +122,10 @@ async def user_sign_up_handler(
 )
 async def user_sign_in_handler(
     body: UserSignInRequestDto,
-    authenticate_service: AuthenticateService = Depends(),
-    user_repo: UserAsyncRepository = Depends(),
+    user_service: UserAsyncService = Depends(),
 ):
-    # 비동기 방식은 두번에 나눠서 쿼리를 진행
-    # 네트워크 IO가 발생하는 순간에 대기
-
-    user: User | None = await user_repo.get_user_by_username(username=body.username)
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    if not authenticate_service.check_password(
-        input_password=body.password, hashed_password=user.password
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
-        )
-
-    access_token = authenticate_service.create_access_token(user.username)
+    access_token = await user_service.authenticate_user_or_404(
+        username=body.username, password=body.password
+    )
 
     return JwtTokenResponseDto.build(access_token=access_token)

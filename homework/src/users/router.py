@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, status, HTTPException, Depends
+from fastapi import APIRouter, Path, status, Depends
 
 from core.authenticate.dto import JwtTokenResponseDto
 from users.dto import (
@@ -9,7 +9,7 @@ from users.dto import (
 )
 from users.models import User
 from core.authenticate.services import AuthenticateService
-from users.repository import UserRepository
+from users.services import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -23,9 +23,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
     status_code=status.HTTP_200_OK,
 )
 def get_users_handler(
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    users: User | None = user_repo.get_users()
+    users: User | None = user_service.get_all_users()
     return [UserResponseDto.build(user=user) for user in users]
 
 
@@ -38,19 +38,13 @@ def get_users_handler(
 def get_user_handler(
     user_id: int = Path(default=..., ge=1),
     _: str = Depends(AuthenticateService.get_username),
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    user: User | None = user_repo.get_user_by_id(user_id=user_id)
+    user: User | None = user_service.get_user_or_404_by_user_id(user_id=user_id)
 
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
     return UserResponseDto.build(user=user)
 
 
-# Basic Authenticate
 @router.get(
     "/me/",
     response_model=UserResponseDto,
@@ -59,17 +53,11 @@ def get_user_handler(
 )
 def get_me_handler(
     username: str = Depends(AuthenticateService.get_username),
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    user: User | None = user_repo.get_user_by_username(username=username)
+    user: User | None = user_service.get_user_or_404_by_username(username=username)
 
-    if user:
-        return UserResponseDto.build(user=user)
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User Not Found",
-    )
+    return UserResponseDto.build(user=user)
 
 
 @router.patch(
@@ -80,22 +68,15 @@ def get_me_handler(
 )
 def update_me_handler(
     body: UserUpdateRequestDto,
-    auth_service: AuthenticateService = Depends(),
     username: str = Depends(AuthenticateService.get_username),
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    user: User | None = user_repo.get_user_by_username(username=username)
-
-    if user:
-        new_password = auth_service.hash_password(plain_password=body.password)
-        user.update_password(new_password=new_password)
-        user_repo.save(user)
-        return UserResponseDto.build(user=user)
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User Not Found",
+    user: User | None = user_service.update_user_password_or_404(
+        username=username,
+        password=body.password,
     )
+
+    return UserResponseDto.build(user=user)
 
 
 @router.delete(
@@ -105,21 +86,11 @@ def update_me_handler(
 )
 def delete_me_handler(
     username: str = Depends(AuthenticateService.get_username),
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    user: User | None = user_repo.get_user_by_username(username=username)
-
-    if user:
-        user_repo.delete(user)
-        return None
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="User Not Found",
-    )
+    user_service.delete_user_or_404(username=username)
 
 
-# JWT Authenticate
 @router.post(
     "/sign-up",
     response_model=UserResponseDto,
@@ -127,15 +98,9 @@ def delete_me_handler(
 )
 def user_sign_up_handler(
     body: UserCreateRequestDto,
-    auth_service: AuthenticateService = Depends(),
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    new_user = User.create(
-        username=body.username,
-        password=auth_service.hash_password(plain_password=body.password),
-    )
-
-    user_repo.save(user=new_user)
+    new_user = user_service.create_user(username=body.username, password=body.password)
 
     return UserResponseDto.build(user=new_user)
 
@@ -147,25 +112,10 @@ def user_sign_up_handler(
 )
 def user_sign_in_handler(
     body: UserSignInRequestDto,
-    authenticate_service: AuthenticateService = Depends(),
-    user_repo: UserRepository = Depends(),
+    user_service: UserService = Depends(),
 ):
-    user: User | None = user_repo.get_user_by_username(body.username)
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    if not authenticate_service.check_password(
-        input_password=body.password, hashed_password=user.password
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
-        )
-
-    access_token = authenticate_service.create_access_token(user.username)
+    access_token = user_service.authenticate_user_or_404(
+        username=body.username, password=body.password
+    )
 
     return JwtTokenResponseDto.build(access_token=access_token)
