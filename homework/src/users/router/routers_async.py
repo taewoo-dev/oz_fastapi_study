@@ -1,17 +1,15 @@
 from fastapi import APIRouter, Path, status, Depends, BackgroundTasks
 
 
-from core.authenticate.dto import JwtTokenResponseDto
+from core.authenticate.dto.JwtTokenResponseDto import JwtTokenResponseDto
 from core.email import send_email
-from users.dto import (
-    UserResponseDto,
-    UserCreateRequestDto,
-    UserUpdateRequestDto,
-    UserSignInRequestDto,
-)
-from users.models import User
-from core.authenticate.services import AuthenticateService
-from users.services import UserAsyncService
+from users.dto.UserResponseDto import UserResponseDto
+from users.dto.UserUpdateRequestDto import UserUpdateRequestDto
+from users.dto.UserCreateRequestDto import UserCreateRequestDto
+from users.dto.UserSignRequestDto import UserSignInRequestDto
+from users.domain.User import User
+from core.authenticate.service.AuthenticateService import AuthenticateService
+from users.service.UserAsyncService import UserAsyncService
 
 router = APIRouter(prefix="/async/users", tags=["Async Users"])
 
@@ -124,8 +122,10 @@ async def user_sign_in_handler(
     body: UserSignInRequestDto,
     user_service: UserAsyncService = Depends(),
 ):
-    access_token = await user_service.authenticate_user_or_404(
+    access_token, refresh_token = await user_service.authenticate_user_or_404(
         username=body.username, password=body.password
     )
 
-    return JwtTokenResponseDto.build(access_token=access_token)
+    return JwtTokenResponseDto.build(
+        access_token=access_token, refresh_token=refresh_token
+    )

@@ -3,17 +3,6 @@ from typing import TypedDict
 from pydantic import BaseModel
 
 
-class ProductCreateRequest(BaseModel):
-    id: int
-    name: str
-    price: int
-
-
-class ProductUpdateRequest(BaseModel):
-    name: str
-    price: int
-
-
 class ProductTypedDict(TypedDict):
     id: int
     name: str
@@ -21,7 +10,7 @@ class ProductTypedDict(TypedDict):
     image_name: str | None
 
 
-class ProductResponse(BaseModel):
+class ProductResponseDto(BaseModel):
     id: int
     name: str
     price: int

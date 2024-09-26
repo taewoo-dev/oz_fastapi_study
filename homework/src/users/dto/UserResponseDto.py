@@ -2,24 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from users.models import User
+from users.domain.User import User
 
 
-class UserSignInRequestDto(BaseModel):
-    username: str
-    password: str
-
-
-class UserCreateRequestDto(BaseModel):
-    username: str
-    password: str
-
-
-class UserUpdateRequestDto(BaseModel):
-    password: str | None
-
-
-# 팩토리 디자인
 class UserResponseDto(BaseModel):
     id: int
     username: str
