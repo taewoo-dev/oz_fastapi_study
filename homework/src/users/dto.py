@@ -17,7 +17,6 @@ class UserCreateRequestDto(BaseModel):
 
 
 class UserUpdateRequestDto(BaseModel):
-    username: str | None
     password: str | None
 
 

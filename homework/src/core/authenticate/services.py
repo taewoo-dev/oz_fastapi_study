@@ -53,27 +53,26 @@ class AuthenticateService:
     def is_valid_token(payload: JwtPayloadTypedDict) -> bool:
         return time.time() < payload["isa"] + JWT_EXPIRY_SECONDS
 
-    @staticmethod  # user의 access token을 가져오는 로직
+    @staticmethod
     def _get_jwt(
-        auth_header: HTTPAuthorizationCredentials = Depends(
-            HTTPBearer(auto_error=False)
-        ),
+        auth_header: HTTPAuthorizationCredentials = HTTPBearer(auto_error=False),
     ):
         if auth_header is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="JWT not provided"
             )
-
         return auth_header.credentials
 
     @staticmethod
     def get_username(
-        access_token: str = Depends(_get_jwt),
-        decode_access_token=Depends(_decode_access_token),
-        is_valid_token=Depends(is_valid_token),
+        auth_header: HTTPAuthorizationCredentials = Depends(
+            HTTPBearer(auto_error=False)
+        ),
     ):
-        payload = decode_access_token(access_token)
-        if not is_valid_token:
+        access_token = AuthenticateService._get_jwt(auth_header)
+        payload = AuthenticateService._decode_access_token(access_token)
+
+        if not AuthenticateService.is_valid_token(payload):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Token Expired"
             )
