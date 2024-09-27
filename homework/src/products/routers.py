@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Query, UploadFile, status, HTTPException
 
-from products.dto.ProductResponseDto import ProductResponseDto
-from products.dto.ProductUpdateRequestDto import ProductUpdateRequestDto
-from products.dto.ProductCreateRequestDto import ProductCreateRequestDto
+from products.dtos.responses import ProductResponseDto
+from products.dtos.reqeusts import ProductCreateRequestDto, ProductUpdateRequestDto
 
 router = APIRouter(prefix="/products", tags=["Products"])
 

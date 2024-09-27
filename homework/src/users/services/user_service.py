@@ -1,9 +1,12 @@
 from fastapi import Depends
 
-from core.authenticate.service.AuthenticateService import AuthenticateService
-from users.domain.User import User
-from users.exception.exceptions import InvalidPasswordException, UserNotFoundException
-from users.repository.UserRepository import UserRepository
+from core.authenticate.services.authenticate_service import AuthenticateService
+from users.domains.user import User
+from users.exceptions.custom_exceptions import (
+    InvalidPasswordException,
+    UserNotFoundException,
+)
+from users.repositorys.user_repository import UserRepository
 
 
 # 의존 관계

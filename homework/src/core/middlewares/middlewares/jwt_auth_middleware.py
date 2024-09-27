@@ -5,13 +5,13 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import Response
 
-from core.middlewares.constants.JwtMiddlwareConstants import (
+from core.middlewares.constants.jwt_middleware_constants import (
     JWT_EXPIRY_SECONDS,
     JWT_SECURITY_KEY,
     JWT_ALGORITHM,
 )
-from core.middlewares.dto.JWTPayloadTyedDict import JwtPayloadTypedDict
-from core.middlewares.exception.CustomException import (
+from core.middlewares.dtos.jwt_payload_typed_dict import JwtPayloadTypedDict
+from core.middlewares.exceptions.custom_exceptions import (
     ExpiredTokenException,
     InvalidRefreshTokenException,
 )

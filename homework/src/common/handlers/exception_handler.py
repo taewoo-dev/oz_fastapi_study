@@ -2,8 +2,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import PlainTextResponse, JSONResponse
 from fastapi import status
 
-from core.middlewares.exception.CustomException import InvalidRefreshTokenException
-from users.exception.exceptions import UserNotFoundException, InvalidPasswordException
+from core.middlewares.exceptions.custom_exceptions import InvalidRefreshTokenException
+from users.exceptions.custom_exceptions import (
+    UserNotFoundException,
+    InvalidPasswordException,
+)
 
 
 def attach_exception_handlers(app):

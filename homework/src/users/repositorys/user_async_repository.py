@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database.connection_async import get_async_db
-from users.domain.User import User
+from users.domains.user import User
 
 
 class UserAsyncRepository:

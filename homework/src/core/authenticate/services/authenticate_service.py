@@ -15,7 +15,7 @@ from core.authenticate.constants import (
     JWT_EXPIRY_SECONDS,
     JWT_REFRESH_EXPIRY_SECONDS,
 )
-from core.authenticate.dto.JwtTokenResponseDto import JwtPayloadTypedDict
+from core.authenticate.dtos.responses import JwtPayloadTypedDict
 
 basic_auth = HTTPBasic()
 

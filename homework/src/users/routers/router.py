@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Path, status, Depends
 
-from core.authenticate.dto.JwtTokenResponseDto import JwtTokenResponseDto
-from users.dto.UserResponseDto import UserResponseDto
-from users.dto.UserUpdateRequestDto import UserUpdateRequestDto
-from users.dto.UserCreateRequestDto import UserCreateRequestDto
-from users.dto.UserSignRequestDto import UserSignInRequestDto
-from users.domain.User import User
-from core.authenticate.service.AuthenticateService import AuthenticateService
-from users.service.UserService import UserService
+from core.authenticate.dtos.responses import JwtTokenResponseDto
+from users.dtos.responses import UserResponseDto
+from users.dtos.requests import (
+    UserCreateRequestDto,
+    UserUpdateRequestDto,
+    UserSignInRequestDto,
+)
+from users.domains.user import User
+from core.authenticate.services.authenticate_service import AuthenticateService
+from users.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -93,6 +95,7 @@ def delete_me_handler(
     "/sign-up",
     response_model=UserResponseDto,
     description="유저 회원가입 API입니다",
+    status_code=status.HTTP_201_CREATED,
 )
 def user_sign_up_handler(
     body: UserCreateRequestDto,
@@ -107,6 +110,7 @@ def user_sign_up_handler(
     "/sign-in",
     response_model=JwtTokenResponseDto,
     description="유저 로그인 API입니다",
+    status_code=status.HTTP_200_OK,
 )
 def user_sign_in_handler(
     body: UserSignInRequestDto,

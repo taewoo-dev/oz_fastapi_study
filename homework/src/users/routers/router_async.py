@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Path, status, Depends, BackgroundTasks
 
 
-from core.authenticate.dto.JwtTokenResponseDto import JwtTokenResponseDto
+from core.authenticate.dtos.responses import JwtTokenResponseDto
 from core.email import send_email
-from users.dto.UserResponseDto import UserResponseDto
-from users.dto.UserUpdateRequestDto import UserUpdateRequestDto
-from users.dto.UserCreateRequestDto import UserCreateRequestDto
-from users.dto.UserSignRequestDto import UserSignInRequestDto
-from users.domain.User import User
-from core.authenticate.service.AuthenticateService import AuthenticateService
-from users.service.UserAsyncService import UserAsyncService
+from users.dtos.responses import UserResponseDto
+from users.dtos.requests import (
+    UserCreateRequestDto,
+    UserUpdateRequestDto,
+    UserSignInRequestDto,
+)
+from users.domains.user import User
+from core.authenticate.services.authenticate_service import AuthenticateService
+from users.services.user_async_service import UserAsyncService
 
 router = APIRouter(prefix="/async/users", tags=["Async Users"])
 
@@ -91,13 +93,14 @@ async def delete_me_handler(
     username: str = Depends(AuthenticateService.get_username),
     user_service: UserAsyncService = Depends(),
 ):
-    user: User | None = await user_service.delete_user_or_404(username=username)
+    await user_service.delete_user_or_404(username=username)
 
 
 @router.post(
     "/sign-up",
     response_model=UserResponseDto,
     description="유저 회원가입 API입니다",
+    status_code=status.HTTP_201_CREATED,
 )
 async def user_sign_up_handler(
     body: UserCreateRequestDto,
@@ -117,6 +120,7 @@ async def user_sign_up_handler(
     "/sign-in",
     response_model=JwtTokenResponseDto,
     description="유저 로그인 API입니다",
+    status_code=status.HTTP_200_OK,
 )
 async def user_sign_in_handler(
     body: UserSignInRequestDto,
