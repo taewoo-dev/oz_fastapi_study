@@ -1,4 +1,5 @@
 from fastapi import Depends
+from sqlalchemy import exists
 from sqlalchemy.orm import Session
 
 from core.database.connection import get_db
@@ -25,3 +26,6 @@ class UserRepository:
     def delete(self, user: User):
         self.db.delete(user)
         self.db.commit()
+
+    def exist_username(self, username: str) -> bool:
+        return self.db.query(exists().where(User.username == username)).scalar()

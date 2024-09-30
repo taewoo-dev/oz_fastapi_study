@@ -1,13 +1,18 @@
 import re
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint, Index
 
 from core.database.orm import Base
 
 
 class User(Base):
     __tablename__ = "service_users"
+
+    __table_args__ = (
+        UniqueConstraint("username", name="uix_service_user_username"),
+        Index("ix_service_user_created_at", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True)
     username = Column(String(16))  # Varchar 16

@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 
 from core.authenticate.services.authenticate_service import AuthenticateService
 from users.domains.user import User
@@ -24,6 +24,9 @@ class UserService:
         self.auth_service = auth_service
 
     def create_user(self, username: str, password: str) -> User:
+        if self.user_repo.exist_username(username=username):
+            raise HTTPException(status_code=409, detail="이미 존재하는 유저이다")
+
         new_user = User.create(
             username=username,
             password=self.auth_service.hash_password(plain_password=password),

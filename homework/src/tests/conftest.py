@@ -21,7 +21,8 @@ from users.domains.user import User
 
 @pytest.fixture(scope="session")
 def test_db():
-    test_db_url = "mysql+pymysql://root:ozcoding@127.0.0.1:3307/test"
+    test_db_url = "mysql+pymysql://root:ozcoding@127.0.0.1:3308/test"
+
     if not database_exists(test_db_url):
         create_database(test_db_url)
 

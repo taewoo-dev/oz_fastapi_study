@@ -11,7 +11,7 @@ import jwt
 
 from core.authenticate.constants import (
     JWT_ALGORITHM,
-    JWT_SECURITY_KEY,
+    JWT_SECRET_KEY,
     JWT_EXPIRY_SECONDS,
     JWT_REFRESH_EXPIRY_SECONDS,
 )
@@ -43,7 +43,7 @@ class AuthenticateService:
         }
         return jwt.encode(
             payload=payload,
-            key=JWT_SECURITY_KEY,
+            key=JWT_SECRET_KEY,
             algorithm=JWT_ALGORITHM,
         )
 
@@ -56,7 +56,7 @@ class AuthenticateService:
         }
         return jwt.encode(
             payload=payload,
-            key=JWT_SECURITY_KEY,
+            key=JWT_SECRET_KEY,
             algorithm=JWT_ALGORITHM,
         )
 
@@ -64,7 +64,7 @@ class AuthenticateService:
     def _decode_token(token: JwtPayloadTypedDict) -> dict:
         return jwt.decode(
             jwt=token,
-            key=JWT_SECURITY_KEY,
+            key=JWT_SECRET_KEY,
             algorithms=[JWT_ALGORITHM],
         )
 
