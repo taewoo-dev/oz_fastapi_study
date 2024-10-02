@@ -29,3 +29,6 @@ class UserRepository:
 
     def exist_username(self, username: str) -> bool:
         return self.db.query(exists().where(User.username == username)).scalar()
+
+    def exist_user_email(self, email: str) -> bool:
+        return self.db.query(exists().where(User.email == email)).scalar()

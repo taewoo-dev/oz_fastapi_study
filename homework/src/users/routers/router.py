@@ -6,6 +6,7 @@ from users.dtos.requests import (
     UserCreateRequestDto,
     UserUpdateRequestDto,
     UserSignInRequestDto,
+    UserOtpRequestDto,
 )
 from users.domains.user import User
 from core.authenticate.services.authenticate_service import AuthenticateService
@@ -122,3 +123,16 @@ def user_sign_in_handler(
     return JwtTokenResponseDto.build(
         access_token=access_token, refresh_token=refresh_token
     )
+
+
+@router.post(
+    "/email/otp",
+    status_code=status.HTTP_200_OK,
+    response_model=None,
+)
+def send_otp_handler(
+    body: UserOtpRequestDto,
+    user_service: UserService = Depends(),
+) -> None:
+    user_service.validate_user_email_or_404(email=body.email)
+    return

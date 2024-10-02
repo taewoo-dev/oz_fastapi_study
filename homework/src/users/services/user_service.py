@@ -90,6 +90,10 @@ class UserService:
 
         return access_token, refresh_token
 
+    def validate_user_email_or_404(self, email: str) -> None:
+        if self.user_repo.exist_user_email(email=email):
+            raise HTTPException(status_code=409, detail="이미 존재하는 이메일이다")
+
     @staticmethod
     def _validate_user_or_raise(user: User | None) -> None:
         if user is None:

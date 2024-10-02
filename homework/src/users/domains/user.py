@@ -11,11 +11,13 @@ class User(Base):
 
     __table_args__ = (
         UniqueConstraint("username", name="uix_service_user_username"),
+        UniqueConstraint("email", name="uix_service_user_email"),
         Index("ix_service_user_created_at", "created_at"),
     )
 
     id = Column(Integer, primary_key=True)
     username = Column(String(16))  # Varchar 16
+    email = Column(String(30))
     password = Column(String(60))  # Bcrypt 60자
     created_at = Column(DateTime, default=datetime.now)
 
